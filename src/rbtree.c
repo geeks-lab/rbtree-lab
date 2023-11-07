@@ -30,12 +30,30 @@ rbtree *new_rbtree(void) {
   return t;
 }
 
+/**
+ * @brief : 재귀적으로 트리 안 노드 전체를 삭제
+ * @param[in] t : rbtree
+ * @param[in] node : 삭제를 시작할 노드
+*/
+void delete_rbtree_nodes__(rbtree *t, node_t *node) {
+  if (node != t->nil) {
+    delete_rbtree_nodes__(t, node->left);
+    delete_rbtree_nodes__(t, node->right);
+    free(node);
+  }
+}
+
+/**
+ * @brief : rbtree 전체 삭제를 수행
+ * @param[in] t : rbtree를 받음
+*/
 void delete_rbtree(rbtree *t) {
-  // TODO: reclaim the tree nodes's memory
+  delete_rbtree_nodes__(t, t->root);
+  free(t->nil);
   free(t);
 }
 
-static void left_rotation__(rbtree *t, node_t *x) {
+void left_rotation__(rbtree *t, node_t *x) {
   node_t *y = x->right; // y 설정
   x->right = y->left; // y의 왼쪽 서브트리를 x의 오른쪽 서브트리로 옮긴다.
   if (y->left != t->nil) {
@@ -53,7 +71,7 @@ static void left_rotation__(rbtree *t, node_t *x) {
   x->parent = y;
 }
 
-static void right_rotation__(rbtree *t, node_t *y) {
+void right_rotation__(rbtree *t, node_t *y) {
   node_t *x = y->left;
   y->left = x->right;
   if (x->right != t->nil) {
@@ -71,7 +89,7 @@ static void right_rotation__(rbtree *t, node_t *y) {
   y->parent = x;
 }
 
-static void rbtree_insert_fixup__(rbtree *t, node_t *z) { // refactor - 이름 z 대신 직관적으로 바꾸기
+void rbtree_insert_fixup__(rbtree *t, node_t *z) { // refactor - 이름 z 대신 직관적으로 바꾸기
   while (z->parent->color == RBTREE_RED) {
     if (z->parent == z->parent->parent->left) {
       node_t *y = z->parent->parent->right;
@@ -153,6 +171,23 @@ node_t *rbtree_min(const rbtree *t) {
 node_t *rbtree_max(const rbtree *t) {
   // TODO: implement find
   return t->root;
+}
+
+
+/**
+ * @brief : delete_rbtree(t, z)에서 삭제할 노드 z와 z를 대체할 노드 y(successor)의 연결 관계를 바꿈
+ * @param[in] t : 해당 트리
+ * @param[in] u: 삭제할 노드
+ * @param[in] v: 삭제할 노드를 대체할 노드
+*/
+void delete_transplant__(rbtree *t, node_t *u, node_t *v){
+  if (u->parent == t->nil) {
+    t->root = v;
+  } else if (u == u->parent->left) {
+    u->parent->right = v;
+  } else {
+    v->parent = u->parent;
+  }
 }
 
 int rbtree_erase(rbtree *t, node_t *p) {
